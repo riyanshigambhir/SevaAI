@@ -1,0 +1,623 @@
+{
+  "name": "SevaAI: Auto Escalation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "id": "8c65cce3-3ce7-4ec4-b80c-d0c90599cd81",
+      "name": "Check Every Hour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        -496,
+        -48
+      ],
+      "typeVersion": 1.3
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $input.all().length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              },
+              "id": "dd41dd1d-11dd-428c-a8e4-ae0745d60b91"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "5b831f6f-c624-4b3b-9296-6f8e834f7d3e",
+      "name": "Any Results?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        -48,
+        -48
+      ],
+      "typeVersion": 2.3
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "61fa8aff-e9da-47a3-8cad-2244f4339c3f",
+      "name": "For Each Complaint",
+      "type": "n8n-nodes-base.splitInBatches",
+      "position": [
+        176,
+        -144
+      ],
+      "typeVersion": 3
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": "messages",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "complaint_id": "={{ $json.id }}",
+            "sender_type": "agent",
+            "content": "=🚨 Your complaint ({{ $json.ticket_id }}) has been automatically escalated to the Department Head. SLA deadline has passed. You will receive a response within 24 hours."
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "complaint_id",
+              "displayName": "complaint_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sender_type",
+              "displayName": "sender_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "content",
+              "displayName": "content",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "9725ab9b-a279-4115-8fa5-50f59465e09e",
+      "name": "Write Escalation Message to Thread",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        400,
+        -144
+      ],
+      "typeVersion": 2.6,
+      "credentials": {
+        "postgres": {
+          "id": "cdFJOb7TaAkiyJZy",
+          "name": "Postgres account"
+        }
+      },
+      "notes": "This message appears in the citizen's thread via Supabase Realtime"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": "complaints",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "sla_days": 0,
+            "id": "={{ $json.complaint_id }}",
+            "status": "escalated"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "ticket_id",
+              "displayName": "ticket_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "citizen_id",
+              "displayName": "citizen_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "officer_id",
+              "displayName": "officer_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "raw_input",
+              "displayName": "raw_input",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "language",
+              "displayName": "language",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "department",
+              "displayName": "department",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "priority",
+              "displayName": "priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "sla_days",
+              "displayName": "sla_days",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "latitude",
+              "displayName": "latitude",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "longitude",
+              "displayName": "longitude",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "address",
+              "displayName": "address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "ward",
+              "displayName": "ward",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "photo_url",
+              "displayName": "photo_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "sla_deadline",
+              "displayName": "sla_deadline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "resolved_at",
+              "displayName": "resolved_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "ca025653-1bd1-4aac-aea0-21d7f0c111db",
+      "name": "Mark Complaint as Escalated",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        624,
+        -144
+      ],
+      "typeVersion": 2.6,
+      "credentials": {
+        "postgres": {
+          "id": "cdFJOb7TaAkiyJZy",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": "escalations",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "complaint_id",
+              "displayName": "complaint_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "reason",
+              "displayName": "reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "escalated_to",
+              "displayName": "escalated_to",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "triggered_by",
+              "displayName": "triggered_by",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "b3da3693-3a3c-43c7-8752-bd9c5e9bf149",
+      "name": "Log to Escalations Table",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        848,
+        -144
+      ],
+      "typeVersion": 2.6,
+      "credentials": {
+        "postgres": {
+          "id": "cdFJOb7TaAkiyJZy",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "4898c2b8-05c0-41c0-bad8-6d3b32df0035",
+      "name": "Nothing to Escalate",
+      "type": "n8n-nodes-base.noOp",
+      "position": [
+        176,
+        48
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, ticket_id, citizen_id, department, category, status, sla_deadline, ward FROM complaints WHERE status NOT IN ('resolved','closed','escalated') AND sla_deadline < NOW()",
+        "options": {}
+      },
+      "id": "ca9e91cb-30e7-4eb8-9df1-c4004c6d7644",
+      "name": "Find SLA Breached Complaints",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        -272,
+        -48
+      ],
+      "typeVersion": 2.6,
+      "credentials": {
+        "postgres": {
+          "id": "cdFJOb7TaAkiyJZy",
+          "name": "Postgres account"
+        }
+      },
+      "notes": "Finds complaints where SLA has been breached and not yet escalated"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Check Every Hour": {
+      "main": [
+        [
+          {
+            "node": "Find SLA Breached Complaints",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Any Results?": {
+      "main": [
+        [
+          {
+            "node": "For Each Complaint",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Nothing to Escalate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "For Each Complaint": {
+      "main": [
+        [
+          {
+            "node": "Write Escalation Message to Thread",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Write Escalation Message to Thread",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Escalation Message to Thread": {
+      "main": [
+        [
+          {
+            "node": "Mark Complaint as Escalated",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Complaint as Escalated": {
+      "main": [
+        [
+          {
+            "node": "Log to Escalations Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find SLA Breached Complaints": {
+      "main": [
+        [
+          {
+            "node": "Any Results?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log to Escalations Table": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "39c74fd9-66cd-4283-acb7-25bf440315bc",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "88a9ef5cc3973ba8a28bdf69ba7b543795f66e43ce06544086e7897c3e68fe70"
+  },
+  "nodeGroups": [],
+  "id": "FKrKOX7P0sak2yxv",
+  "tags": []
+}
